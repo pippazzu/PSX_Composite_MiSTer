@@ -245,15 +245,9 @@ parameter CONF_STR = {
 	"P1O[60],Sync 480i for HDMI,Off,On;",
 	"P1O[24],Rotate,Off,On;",
 	"P1-;",
-	"P1O[22],Dithering,On,Off;",
-	"DEP1O[84],Render 24 Bit,Off,On;",
-	"P1O[73],Dither 24 Bit for VGA,Off,On;",
 	"P1-;",
 	"P1O[89],480i to 480p Hack,Off,On;",
 	"P1O[54:53],Widescreen Hack,Off,3:2,5:3,16:9;",
-	"P1O[82:81],Texture Filter,Off,All Polygon,Dithered,Dith+Shaded;",
-	"hDP1O[87:86],Filter Strength,25%,50%,75%,100%;",
-	"hDP1O[83],Filter 2D Detect,Off,On;",
 	"P1-;",
 	"d1P1O[44],SPU RAM select,DDR3,SDRAM2;",
 	"P1O[8:7],Stereo Mix,None,25%,50%,100%;",
@@ -383,7 +377,7 @@ wire [15:0] joystick3_rumble;
 wire [15:0] joystick4_rumble;
 wire [32:0] RTC_time;
 
-wire filter_on = (status[82:81] == 2'b00) ? 1'b0 : 1'b1;
+wire filter_on = 1'b0;
 
 assign HDMI_BLACKOUT = ~status[61];
 
@@ -926,7 +920,8 @@ psx
    .FORCECDSPEED(status[77:75]),
    .LIMITREADSPEED(status[78]),
    .IGNORECDDMATIMING(status[88]),
-   .ditherOff(status[22]),
+   // Native dithering remains controlled by GPU commands; no user override.
+   .ditherOff(1'b0),
    .interlaced480pHack(status[89]),
    .showGunCrosshairs(status[9]),
    .enableNeGconRumble(status[91]),
@@ -938,11 +933,14 @@ psx
    .LBAOn(status[69]),
    .PATCHSERIAL(0), //.PATCHSERIAL(status[54]),
    .noTexture(status[27]),
-   .textureFilter(status[82:81]),
-   .textureFilterStrength(status[87:86]),
-   .textureFilter2DOff(status[83]),
-   .dither24(status[73]),
-   .render24(status[84] && ~hack_480p),
+   // Compile out optional texture smoothing without changing pipeline latency.
+   .textureFilter(2'b00),
+   .textureFilterStrength(2'b00),
+   .textureFilter2DOff(1'b0),
+   .dither24(1'b0),
+   // Optional 24-bit rendering is removed to make room for composite video;
+   // the console's native 24-bit display mode is unaffected.
+   .render24(1'b0),
    .drawSlow(status[90]),
    .syncVideoOut(syncVideoOut),
    .syncInterlace(status[60]),
@@ -1524,16 +1522,17 @@ always_ff @(posedge CLK_VIDEO) if (CE_PIXEL) begin
 
 end
 
-assign gamma_bus[21] = 1;
+// Keep gamma's bypass latency; constant controls remove its lookup hardware.
+assign gamma_bus[21] = 0;
 gamma_corr gamma(
 	.clk_sys(gamma_bus[20]),
 	.clk_vid(CLK_VIDEO),
 	.ce_pix(CE_PIXEL),
 
-	.gamma_en(gamma_bus[19]),
-	.gamma_wr(gamma_bus[18]),
-	.gamma_wr_addr(gamma_bus[17:8]),
-	.gamma_value(gamma_bus[7:0]),
+	.gamma_en(1'b0),
+	.gamma_wr(1'b0),
+	.gamma_wr_addr(10'd0),
+	.gamma_value(8'd0),
 
 	.HSync(video_aspect.hs),
 	.VSync(video_aspect.vs),

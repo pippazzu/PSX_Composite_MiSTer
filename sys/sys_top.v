@@ -713,6 +713,8 @@ wire         bob_deint;
 
 	ascal 
 	#(
+		// Nearest-neighbour HDMI scaling only, to free resources for composite video.
+		.MASK(8'h01),
 		.RAMBASE(32'h20000000),
 	`ifdef MISTER_SMALL_VBUF
 		.RAMSIZE(32'h00200000),
@@ -788,7 +790,7 @@ wire         bob_deint;
 		.vrrmax   (HEIGHT + VBP + VS[11:0] + 12'd1),
 		.swblack  (hdmi_blackout),
 
-		.mode     ({~lowlat,LFB_EN ? LFB_FLT : |scaler_flt,2'b00}),
+		.mode     ({~lowlat,3'b000}),
 		.poly_clk (clk_sys),
 		.poly_a   (coef_addr),
 		.poly_dw  (coef_data),

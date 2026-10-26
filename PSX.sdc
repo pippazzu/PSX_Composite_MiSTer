@@ -14,3 +14,11 @@ set_false_path -from {emu|pll2|pll2_inst|altera_pll_i|cyclonev_pll|counter[0].ou
 set_false_path -from {emu|pll2|pll2_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk} -to {pll_hdmi|pll_hdmi_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk}
 set_false_path -from {emu|pll2|pll2_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk} -to {sysmem|fpga_interfaces|clocks_resets|h2f_user0_clk}
 set_false_path -from {emu|pll2|pll2_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk} -to {FPGA_CLK1_50}
+
+# Composite video (rtl/composite). CLK_VIDEO is analysed at its fastest
+# reconfiguration (fast forward, ~86 MHz), but composite is only selected at
+# the normal NTSC video clock, 53.693175 MHz (18.62 ns); in fast forward the
+# core shows its RGB path and the free-running composite chain re-locks to
+# the next frame. Hold its internal paths and its output to the 53.69 MHz period.
+set_max_delay -from [get_registers {*|composite_video|*}] 18.5
+set_max_delay -to   [get_registers {*|composite_video|*}] 18.5

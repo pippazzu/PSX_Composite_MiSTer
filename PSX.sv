@@ -240,11 +240,15 @@ parameter CONF_STR = {
 	"DEP1O[55],Fixed VBlank,Off,On;",
 	"d5P1O[4:3],Vertical Crop,Off,On(224/270),On(216/256);",
 	"P1O[67],Horizontal Crop,Off,On;",
+	"P1-;",
+	"P1O[94:93],Composite (NTSC),Off,Budget TV,Premium TV;",
+	"hDP1O[99:97],Comp. Brightness,Japan,USA,More,Much More,Too Much;",
+	"hDP1O[101:100],Comp. Sharpness,Off,Low,Medium,High;",
+	"P1-;",
 	"P1O[61],Black Transitions,On,Off;",
 	"P1O[41],Deinterlacing,Weave,Bob;",
 	"P1O[60],Sync 480i for HDMI,Off,On;",
 	"P1O[24],Rotate,Off,On;",
-	"P1-;",
 	"P1-;",
 	"P1O[89],480i to 480p Hack,Off,On;",
 	"P1O[54:53],Widescreen Hack,Off,3:2,5:3,16:9;",
@@ -323,7 +327,7 @@ parameter CONF_STR = {
 reg dbg_enabled = 0;
 wire  [1:0] buttons;
 wire [127:0] status;
-wire [15:0] status_menumask = {(PadPortNeGcon1 | PadPortNeGcon2), hack_480p, filter_on, saving_memcard, (bk_pending | saving_memcard), bk_pending, status[59], multitap, biosMod, ~TURBO_MEM, (status[55] && ~hack_480p), (PadPortDS1 | PadPortDS2), dbg_enabled, (PadPortGunCon1 | PadPortGunCon2 | PadPortJustif1 | PadPortJustif2), SDRAM2_EN, (snacPort1 | snacPort2)};
+wire [15:0] status_menumask = {(PadPortNeGcon1 | PadPortNeGcon2), hack_480p, cv_selected, saving_memcard, (bk_pending | saving_memcard), bk_pending, status[59], multitap, biosMod, ~TURBO_MEM, (status[55] && ~hack_480p), (PadPortDS1 | PadPortDS2), dbg_enabled, (PadPortGunCon1 | PadPortGunCon2 | PadPortJustif1 | PadPortJustif2), SDRAM2_EN, (snacPort1 | snacPort2)};
 wire        forced_scandoubler;
 reg  [31:0] sd_lba0 = 0;
 reg  [31:0] sd_lba1;
@@ -377,7 +381,6 @@ wire [15:0] joystick3_rumble;
 wire [15:0] joystick4_rumble;
 wire [32:0] RTC_time;
 
-wire filter_on = 1'b0;
 
 assign HDMI_BLACKOUT = ~status[61];
 
@@ -938,8 +941,8 @@ psx
    .textureFilterStrength(2'b00),
    .textureFilter2DOff(1'b0),
    .dither24(1'b0),
-   // Optional 24-bit rendering is removed to make room for composite video;
-   // the console's native 24-bit display mode is unaffected.
+   // Optional 24-bit rendering removed to make room for composite; the
+   // console's native 24-bit display mode is unaffected.
    .render24(1'b0),
    .drawSlow(status[90]),
    .syncVideoOut(syncVideoOut),
@@ -1383,14 +1386,41 @@ typedef struct {
 vid_info video_aspect;
 vid_info video_gamma;
 
-assign CE_PIXEL = ce_pix;
+// NTSC composite (PU-8 / SCPH-1002 CXA1645 encoder and a TV), NTSC only. The direct
+// framebuffer, fast forward and PAL keep the RGB path.
+wire cv_selected = status[94:93] != 2'd0;
+wire cv_wanted = cv_selected && !video_isPal && !FB_EN && !fast_forward;
+// The selection comes from other clock domains (false paths in PSX.sdc).
+reg cv_meta = 0, use_composite = 0;
+always @(posedge CLK_VIDEO) {use_composite, cv_meta} <= {cv_meta, cv_wanted};
+wire signed [15:0] cv_brightness = status[99:97]==1 ? 16'shFE49 :
+    status[99:97]==2 ? 16'sd292 : status[99:97]==3 ? 16'sd643 :
+    status[99:97]==4 ? 16'sd936 : 16'sd0;
+wire cv_pix, cv_hs, cv_vs, cv_hb, cv_vb, cv_field;
+wire [7:0] cv_r, cv_g, cv_b;
+
+psx_composite composite_video (
+	// Never reset: it runs from power-up, so its delay lines and running sums
+	// stay consistent and synthesis can keep them in block RAM.
+	.clk(CLK_VIDEO), .reset(1'b0),
+	.r((vbl || hbl) ? 8'd0 : r), .g((vbl || hbl) ? 8'd0 : g), .b((vbl || hbl) ? 8'd0 : b),
+	.hs(hs), .vs(vs),
+	.premium(status[94:93] == 2'd2),
+	.brightness(cv_brightness), .sharpness({status[101:100], 2'b00}),
+	.t_hs(video_aspect.hs), .t_vs(video_aspect.vs), .t_hb(video_aspect.hb), .t_vb(video_aspect.vb),
+	.t_field(video_aspect.interlace),
+	.pix(cv_pix), .hs_out(cv_hs), .vs_out(cv_vs), .hb_out(cv_hb), .vb_out(cv_vb),
+	.field_out(cv_field), .r_out(cv_r), .g_out(cv_g), .b_out(cv_b)
+);
+
+assign CE_PIXEL = use_composite ? cv_pix : ce_pix;
 assign VGA_R    = video_gamma.red;
 assign VGA_G    = video_gamma.green;
 assign VGA_B    = video_gamma.blue;
 assign VGA_VS   = video_gamma.vs;
 assign VGA_HS   = video_gamma.hs;
 assign VGA_DE   = ~(video_gamma.vb | video_gamma.hb);
-assign VGA_F1   =  status[14] ? 1'b0 : video_aspect.interlace;
+assign VGA_F1   =  status[14] ? 1'b0 : use_composite ? cv_field : video_aspect.interlace;
 assign VGA_SL = 0;
 logic [11:0] aspect_x, aspect_y;
 
@@ -1471,7 +1501,7 @@ always_comb begin
 	hb_end = hb_end_lut[video_hResMode];
 end
 
-always_ff @(posedge CLK_VIDEO) if (CE_PIXEL) begin
+always_ff @(posedge CLK_VIDEO) if (ce_pix) begin
 	logic old_vb;
 	old_vb <= vbl;
 	video_aspect.hs <= hs;
@@ -1534,11 +1564,11 @@ gamma_corr gamma(
 	.gamma_wr_addr(10'd0),
 	.gamma_value(8'd0),
 
-	.HSync(video_aspect.hs),
-	.VSync(video_aspect.vs),
-	.HBlank(video_aspect.hb),
-	.VBlank(video_aspect.vb),
-	.RGB_in({video_aspect.red,video_aspect.green,video_aspect.blue}),
+	.HSync(use_composite ? cv_hs : video_aspect.hs),
+	.VSync(use_composite ? cv_vs : video_aspect.vs),
+	.HBlank(use_composite ? cv_hb : video_aspect.hb),
+	.VBlank(use_composite ? cv_vb : video_aspect.vb),
+	.RGB_in(use_composite ? {cv_r,cv_g,cv_b} : {video_aspect.red,video_aspect.green,video_aspect.blue}),
 
 	.HSync_out(video_gamma.hs),
 	.VSync_out(video_gamma.vs),

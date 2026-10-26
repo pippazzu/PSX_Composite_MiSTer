@@ -1,3 +1,79 @@
+# PSX_MiSTer-Composite
+
+A fork of [PSX_MiSTer](https://github.com/MiSTer-devel/PSX_MiSTer) that adds an
+NTSC composite video picture, generated in the FPGA and shown over HDMI or
+analog RGB. The GPU's RGB and sync drive a model of the console's Sony CXA1645
+RGB encoder, followed by a model of a TV's composite decoder, so the picture
+shows composite artifacts such as dot crawl, colour bleeding and rainbow
+fringing on fine detail.
+
+The encoder model is based on the PU-8 motherboard (SCPH-1002): the Sony
+CXA1645 data sheet's typical levels and timing, and the board's YTRAP coil
+trap. Every constant, its source and the remaining assumptions are listed in
+[docs/composite/PARAMETERS.md](docs/composite/PARAMETERS.md).
+
+## Installation
+
+Copy `releases/PSX_Composite_<date>.rbf` to `_Console` on the MiSTer SD card.
+Everything else (BIOS files, memory cards, games) is set up as for the
+original core, described below.
+
+## Composite options
+
+In **Video & Audio**:
+
+| Option | Choices |
+| --- | --- |
+| Composite (NTSC) | Off, Budget TV (notch filter), Premium TV (adaptive comb filter) |
+| Comp. Brightness | Japan, USA, More, Much More, Too Much |
+| Comp. Sharpness | Off, Low, Medium, High |
+
+Composite applies to NTSC video. PAL games, fast forward, the DDR3 framebuffer
+and the 480i to 480p hack show the normal RGB picture.
+
+## Differences from the original core
+
+To make room for composite video, these optional features are removed:
+
+- Texture filtering
+- Dithering on/off and 24-bit dithering for VGA (games keep their own
+  dithering)
+- Render 24 Bit (native 24-bit display mode is kept)
+- Gamma correction
+- HDMI scaler filters (nearest-neighbour scaling only)
+- The MiSTer framework's analog S-Video and CVBS output modes (`vga_mode`
+  `svideo` and `cvbs`); analog RGB output works as before
+
+## Implementation
+
+| Path | Contents |
+| --- | --- |
+| `rtl/composite/cxa1645.sv` | CXA1645 encoder model |
+| `rtl/composite/composite_decoder.sv` | TV decoder |
+| `rtl/composite/psx_composite.sv` | Integration with the core's video path |
+| `docs/composite/PARAMETERS.md` | Model parameters and their sources |
+| `tools/composite/` | Model script, Icarus Verilog testbench, build script |
+
+The design is verified in simulation against the reference decoder and the
+data sheet levels, and runs on MiSTer hardware. It has not been compared
+with a real PU-8's composite output.
+
+The code in this fork was written by Claude (Anthropic) under aldocx's
+direction. Contact: aldocx on Discord, or open an issue on this repository.
+
+## Credits
+
+- [PSX_MiSTer](https://github.com/MiSTer-devel/PSX_MiSTer) by Robert Peip
+  (FPGAzumSpass) and contributors: the PlayStation core this fork is built on.
+- The TV decoder is derived from the NTSC composite decoder by Kitrinx
+  (Jamie Blanks), MIT licence (`rtl/composite/LICENSE.decoder`); her copyright
+  notice is kept in the source.
+- Sony CXA1645P/M data sheet for the encoder's levels and timing.
+
+The remainder of this file is the original core's documentation.
+
+---
+
 # [Playstation](https://en.wikipedia.org/wiki/PlayStation_(console)) for [MiSTer Platform](https://github.com/MiSTer-devel/Main_MiSTer/wiki)
 
 ## Hardware Requirements
@@ -10,16 +86,14 @@ SDRAM of any size is required.
 * CUE+BIN and CHD format support
 * Multiple Disc Game support with automatic Lid open/close toggle
 * Fast Boot (Skips BIOS)
-* Dithering On/Off Toggle
 * Bob or Weave Deinterlacing
-* Texture Filtering
-* 24 Bit rendering
 * Widescreen modes
 * Screen rotation by 180°
 * 8 Mbyte mode(from dev units, mostly for homebrew) 
 * Inputs: DualShock, Digital, Analog, Mouse, NeGcon, Wheel, Justifier and Guncon support.
 * Native Input support through SNAC
 * Old GPU (CXD8514Q)
+* NTSC composite video (this fork)
 
 ## Bios
 Rename your playstation bios file (e.g. `scph-1001.bin`/`ps-22a.bin` ) and place it in the `./games/PSX/` folder.
@@ -69,8 +143,6 @@ Core can output through HDMI and Analog out.
 HDMI also offers a debugging framebuffer mode with support of full VRAM as 1024x512 pixel image(debug only)
 
 Analog out from Direct Video is full 24Bit Color, but from Analog Board will only deliver 18 Bits of color.
-You can activate the 24 Bit dithering option to remove color banding in FMVs without decreasing the image quality in 16 bit color ingame.
-Do not use with HDMI or you get artifacts!
 
 Fixed Hblank as well as Fixed Vblank can help delivering correct aspect rations and keeping the screen in sync with e.g. shaking animations.
 Both also offer crop options for games that depend on CRT viewports to hide artifacts at the edge of the image.

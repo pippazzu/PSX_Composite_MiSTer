@@ -1,80 +1,7 @@
-# PSX_MiSTer-Composite
+# [Playstation](https://en.wikipedia.org/wiki/PlayStation_(console)) for [MiSTer Platform](https://github.com/MiSTer-devel/Main_MiSTer/wiki), with composite video
 
-A fork of [PSX_MiSTer](https://github.com/MiSTer-devel/PSX_MiSTer) that adds an
-NTSC composite video picture, generated in the FPGA and shown over HDMI or
-analog RGB. The GPU's RGB and sync drive a model of the console's Sony CXA1645
-RGB encoder, followed by a model of a TV's composite decoder, so the picture
-shows composite artifacts such as dot crawl, colour bleeding and rainbow
-fringing on fine detail.
-
-The encoder model is based on the PU-8 motherboard (SCPH-1002): the Sony
-CXA1645 data sheet's typical levels and timing, and the board's YTRAP coil
-trap. Every constant, its source and the remaining assumptions are listed in
-[docs/composite/PARAMETERS.md](docs/composite/PARAMETERS.md).
-
-## Installation
-
-Copy `releases/PSX_Composite_<date>.rbf` to `_Console` on the MiSTer SD card.
-Everything else (BIOS files, memory cards, games) is set up as for the
-original core, described below.
-
-## Composite options
-
-In **Video & Audio**:
-
-| Option | Choices |
-| --- | --- |
-| Composite (NTSC) | Off, Budget TV (notch filter), Premium TV (adaptive comb filter) |
-| Comp. Brightness | Japan, USA, More, Much More, Too Much |
-| Comp. Sharpness | Off, Low, Medium, High |
-
-Composite applies to NTSC video. PAL games, fast forward, the DDR3 framebuffer
-and the 480i to 480p hack show the normal RGB picture.
-
-## Differences from the original core
-
-To make room for composite video, these optional features are removed:
-
-- Texture filtering
-- Dithering on/off and 24-bit dithering for VGA (games keep their own
-  dithering)
-- Render 24 Bit (native 24-bit display mode is kept)
-- Gamma correction
-- HDMI scaler filters (nearest-neighbour scaling only)
-- The MiSTer framework's analog S-Video and CVBS output modes (`vga_mode`
-  `svideo` and `cvbs`); analog RGB output works as before
-
-## Implementation
-
-| Path | Contents |
-| --- | --- |
-| `rtl/composite/cxa1645.sv` | CXA1645 encoder model |
-| `rtl/composite/composite_decoder.sv` | TV decoder |
-| `rtl/composite/psx_composite.sv` | Integration with the core's video path |
-| `docs/composite/PARAMETERS.md` | Model parameters and their sources |
-| `tools/composite/` | Model script, Icarus Verilog testbench, build script |
-
-The design is verified in simulation against the reference decoder and the
-data sheet levels, and runs on MiSTer hardware. It has not been compared
-with a real PU-8's composite output.
-
-The code in this fork was written by Claude (Anthropic) under aldocx's
-direction. Contact: aldocx on Discord, or open an issue on this repository.
-
-## Credits
-
-- [PSX_MiSTer](https://github.com/MiSTer-devel/PSX_MiSTer) by Robert Peip
-  (FPGAzumSpass) and contributors: the PlayStation core this fork is built on.
-- The TV decoder is derived from the NTSC composite decoder by Kitrinx
-  (Jamie Blanks), MIT licence (`rtl/composite/LICENSE.decoder`); her copyright
-  notice is kept in the source.
-- Sony CXA1645P/M data sheet for the encoder's levels and timing.
-
-The remainder of this file is the original core's documentation.
-
----
-
-# [Playstation](https://en.wikipedia.org/wiki/PlayStation_(console)) for [MiSTer Platform](https://github.com/MiSTer-devel/Main_MiSTer/wiki)
+This fork adds the console's composite video: the picture an NTSC PlayStation (SCPH-1002, PU-8 board) sends
+through its AV cable, decoded with Kitrinx's composite filters. See [Composite video](#composite-video).
 
 ## Hardware Requirements
 SDRAM of any size is required.
@@ -93,7 +20,7 @@ SDRAM of any size is required.
 * Inputs: DualShock, Digital, Analog, Mouse, NeGcon, Wheel, Justifier and Guncon support.
 * Native Input support through SNAC
 * Old GPU (CXD8514Q)
-* NTSC composite video (this fork)
+* Composite video (see below)
 
 ## Bios
 Rename your playstation bios file (e.g. `scph-1001.bin`/`ps-22a.bin` ) and place it in the `./games/PSX/` folder.
@@ -149,6 +76,29 @@ Both also offer crop options for games that depend on CRT viewports to hide arti
 
 Sync 480i for HDMI will make 480i content run with 240p timings, making it easier for HDMI devices to keep the sync when switching between both modes in games. 
 Do not use with VGA/Analog out or you get artifacts!
+
+## Composite video
+
+Based on Kitrinx's NES core implementation, built from the CXA1645 data sheet and photographs of an
+SCPH-1002 (PU-8) motherboard. The GPU's RGB and sync come from the core, the Sony CXA1645 encoder
+from its data sheet, the board's luma trap and output stage from the photographs, decoded with Kitrinx's
+composite filters. Runs in step with the video signal, adding under a microsecond of delay.
+Technical notes: [docs/composite.md](docs/composite.md).
+
+Options, in **Video & Audio** (NTSC games):
+
+* **Composite (NTSC)**: Off / Budget TV (notch filter, softer colour) / Premium TV (comb filter,
+  sharper colour).
+* **Comp. Brightness**: Japan (the console's own black) / USA (a US set: the darkest shades crush to
+  black) / More / Much More / Too Much.
+* **Comp. Sharpness**: Off / Low / Medium / High (the TV's sharpness knob).
+
+PAL games, fast forward and the debug framebuffer show the RGB picture.
+
+This core is for HDMI and 15 kHz RGB CRTs. Texture filtering, the dithering and 24-bit dithering
+options, Render 24 Bit (the console's own 24-bit mode stays), gamma correction, the HDMI scaler
+filters, adaptive scanlines and the S-Video and CVBS analog output modes are removed to fit the
+FPGA. For S-video or those options, use the main core.
 
 ## Libcrypt
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 //
-// PlayStation NTSC composite, aimed at the PU-8 board (SCPH-1002): GPU RGB
+// PlayStation NTSC composite, aimed at the NTSC PU-8 board: GPU RGB
 // and sync -> CXA1645 encoder with the PU-8 Y trap -> TV
 // decoder, all on CLK_VIDEO (53.693175 MHz, 15 samples per subcarrier).
 //

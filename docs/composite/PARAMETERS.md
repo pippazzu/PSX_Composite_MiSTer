@@ -1,6 +1,6 @@
 # CXA1645 composite model: parameters
 
-The model is based on the PlayStation PU-8 motherboard (SCPH-1002) and its
+The model is based on the PlayStation PU-8 motherboard (NTSC) and its
 Sony CXA1645 RGB encoder in NTSC mode (NPIN high, FO = 20 kohm). Source: Sony CXA1645P/M data sheet
 (E93411A41-ST), typical values at its loaded measurement point (75 ohm
 driver, 220 uF, 75 ohm source, 75 ohm termination). Constants are derived by

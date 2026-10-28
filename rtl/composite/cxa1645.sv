@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 //
-// Sony CXA1645 RGB encoder as on the PU-8 board (SCPH-1002), NTSC mode (NPIN high, FO = 20 kohm), one sample
+// Sony CXA1645 RGB encoder as on the PU-8 board, NTSC mode (NPIN high, FO = 20 kohm), one sample
 // per CLK_VIDEO (53.693175 MHz, 15 per subcarrier cycle).
 //
 // Levels are the data sheet's typical values at its loaded measurement point
@@ -20,7 +20,7 @@
 // fsc +/- 1.3 MHz (an assumption), which on the colour differences is a
 // one-pole low-pass, and the internal Y delay line matches its group delay.
 // YTRAP (pin 17) acts on the CVOUT luma only, through the pin's 1.5 kohm
-// input resistance; the target PU-8 board (SCPH-1002) fits a 33 uH +
+// input resistance; the target PU-8 board fits a 33 uH +
 // capacitor series trap there. model/cxa1645_model.py derives every
 // constant.
 

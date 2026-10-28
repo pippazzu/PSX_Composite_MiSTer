@@ -1,6 +1,6 @@
 # [Playstation](https://en.wikipedia.org/wiki/PlayStation_(console)) for [MiSTer Platform](https://github.com/MiSTer-devel/Main_MiSTer/wiki), with composite video
 
-This fork adds the console's composite video: the picture an NTSC PlayStation (SCPH-1002, PU-8 board) sends
+This fork adds the console's composite video: the picture an NTSC PlayStation (PU-8 board) sends
 through its AV cable, decoded with Kitrinx's composite filters. See [Composite video](#composite-video).
 
 ## Hardware Requirements
@@ -79,8 +79,8 @@ Do not use with VGA/Analog out or you get artifacts!
 
 ## Composite video
 
-Based on Kitrinx's NES core implementation, built from the CXA1645 data sheet and photographs of an
-SCPH-1002 (PU-8) motherboard. The GPU's RGB and sync come from the core, the Sony CXA1645 encoder
+Based on Kitrinx's NES core implementation, built from the CXA1645 data sheet and photographs of PU-8
+motherboards. The GPU's RGB and sync come from the core, the Sony CXA1645 encoder
 from its data sheet, the board's luma trap and output stage from the photographs, decoded with Kitrinx's
 composite filters. Runs in step with the video signal, adding under a microsecond of delay.
 Technical notes: [docs/composite.md](docs/composite.md).

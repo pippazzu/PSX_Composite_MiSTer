@@ -1386,7 +1386,7 @@ typedef struct {
 vid_info video_aspect;
 vid_info video_gamma;
 
-// NTSC composite (PU-8 / SCPH-1002 CXA1645 encoder and a TV), NTSC only. The direct
+// NTSC composite (PU-8 board CXA1645 encoder and a TV), NTSC only. The direct
 // framebuffer, fast forward and PAL keep the RGB path.
 wire cv_selected = status[94:93] != 2'd0;
 wire cv_wanted = cv_selected && !video_isPal && !FB_EN && !fast_forward;

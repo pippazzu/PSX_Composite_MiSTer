@@ -2,8 +2,9 @@
 
 ## PlayStation composite output (CXA1645)
 
-Sources: the Sony CXA1645P/M data sheet (E93411A41-ST), photographs of an NTSC SCPH-1002 motherboard
-(PU-8, encoder IC501 CXA1645M), the NTSC standard, and the existing MiSTer core for the GPU's video
+Sources: the Sony CXA1645P/M data sheet (E93411A41-ST), photographs of two PU-8 motherboards,
+an NTSC one (1-658-467-23, 53.69 MHz video crystal) and a PAL SCPH-1002 (1-658-467-22, 53.20 MHz),
+both with encoder IC501 CXA1645M, the NTSC standard, and the existing MiSTer core for the GPU's video
 timing. No service schematic was used, and no console has been measured with an oscilloscope, so
 nothing below is checked against a real console's output. Every constant, its source and the
 assumptions are listed in [composite/PARAMETERS.md](composite/PARAMETERS.md).
@@ -23,10 +24,10 @@ assumptions are listed in [composite/PARAMETERS.md](composite/PARAMETERS.md).
    filter has no published response: it is an estimate, −3 dB at fsc ± 1.3 MHz, with the internal
    luma delay line matched to its group delay. The half-H killer's threshold is not published
    either; it is taken as 0.75 H.
-3. **The board** (read from the photographs): YTRAP (pin 17, 1.5 kΩ input resistance per the data
-   sheet) goes to ground through L507, 33 µH, in series with an unmarked capacitor. The capacitor's
-   value is an estimate, 59.9 pF, which tunes the trap to the subcarrier (notch Q 0.49); the
-   inductor is the only marked part. It notches the luma of the composite output only. The output
+3. **The board** (read from the photographs, the same on both): YTRAP (pin 17, 1.5 kΩ input resistance per the data
+   sheet) goes to ground through L507, 33 µH on both boards, in series with an unmarked capacitor. The
+   capacitor's value is an estimate, 59.9 pF, which tunes the trap to the NTSC subcarrier (notch
+   Q 0.49); the inductor is the only marked part. It notches the luma of the composite output only. The output
    stage is a 1 kΩ load on the chip's output, an emitter follower (Q504) and 75 Ω in series, which
    gives the data sheet's loaded levels at a 75 Ω TV. The output coupling is 220 µF into 150 Ω
    (4.8 Hz), which a TV's clamp removes.

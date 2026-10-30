@@ -10,8 +10,9 @@
 //
 // Picture geometry stays the core's: its blanking, crop and field timing
 // are delayed to sit on the decoded picture, which is presented at
-// CLK_VIDEO / 4 (13.4 MHz) so detail at the subcarrier survives. The
-// decoder's own sync recovery serves only its burst and clamp gates.
+// CLK_VIDEO / 2 (26.8 MHz, 7.5 per subcarrier cycle) so the scaler has
+// enough samples to draw it. The decoder's own sync recovery serves only
+// its burst and clamp gates.
 
 module psx_composite (
 	input              clk,
@@ -87,13 +88,13 @@ always @(posedge clk) begin
 end
 assign {hs_out, vs_out, hb_out, vb_out, field_out} = timing[PRESENT_DELAY-1];
 
-// One pixel in four, locked to the line.
-reg [1:0] pcnt;
-reg       hs_q;
+// One pixel in two, locked to the line.
+reg pcnt;
+reg hs_q;
 always @(posedge clk) begin
 	hs_q <= hs_out;
-	pcnt <= (hs_out & ~hs_q) ? 2'd0 : pcnt + 2'd1;
+	pcnt <= (hs_out & ~hs_q) ? 1'b0 : ~pcnt;
 end
-assign pix = (pcnt == 2'd3);
+assign pix = pcnt;
 
 endmodule

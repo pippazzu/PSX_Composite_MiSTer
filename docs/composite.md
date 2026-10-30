@@ -58,8 +58,8 @@ All of it runs on the core's video clock, 53.693175 MHz, 15 samples per subcarri
    lowers black by 0.054 V (7.5 IRE), the setup a US set expects; More, Much More and Too Much
    raise it by 0.036, 0.078 and 0.114 V. Comp. Sharpness sets the peaking to 0, 4, 8 or 12 of 15.
 5. **Picture timing**: the core's own blanking, sync and field signals are delayed 48 samples to
-   sit on the decoded picture, which is presented at the video clock / 4 (13.4 MHz) so detail at
-   the subcarrier survives the scaler. Encoder to decoded RGB is 49 samples, 0.91 µs. The
+   sit on the decoded picture, which is presented at the video clock / 2 (26.8 MHz, 7.5 samples
+   per subcarrier cycle, at most 1707 a line) so the scaler has enough samples to draw it. Encoder to decoded RGB is 49 samples, 0.91 µs. The
    decoder's own sync recovery serves only its burst and clamp gates.
 6. **Selection**: composite replaces the RGB picture only for NTSC video at the normal video clock.
    PAL video, the debug framebuffer and fast forward (which raises the video clock) show the RGB
@@ -132,6 +132,6 @@ With a 4.7 µs sync and standard NTSC timing, the decoder gives the same picture
 
 ## Build
 
-Quartus 17.0.2 Build 602 Lite, 5CSEBA6U23I7, seed 6. Logic 41,059 / 41,910 ALMs (98%), DSP blocks
-110/112, RAM blocks 392/553 (71%). Worst setup slack is +0.029 ns and hold slack +0.127 ns, so
+Quartus 17.0.2 Build 602 Lite, 5CSEBA6U23I7, seed 3. Logic 41,122 / 41,910 ALMs (98%), DSP blocks
+110/112, RAM blocks 392/553 (71%). Worst setup slack is +0.096 ns and hold slack +0.118 ns, so
 timing passes.

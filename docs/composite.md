@@ -132,6 +132,6 @@ With a 4.7 µs sync and standard NTSC timing, the decoder gives the same picture
 
 ## Build
 
-Quartus 17.0.2 Build 602 Lite, 5CSEBA6U23I7, seed 3. Logic 41,122 / 41,910 ALMs (98%), DSP blocks
-110/112, RAM blocks 392/553 (71%). Worst setup slack is +0.096 ns and hold slack +0.118 ns, so
+Quartus 17.0.2 Build 602 Lite, 5CSEBA6U23I7, seed 7. Logic 41,247 / 41,910 ALMs (98%), DSP blocks
+111/112, RAM blocks 392/553 (71%). Worst setup slack is +0.115 ns and hold slack +0.149 ns, so
 timing passes.
